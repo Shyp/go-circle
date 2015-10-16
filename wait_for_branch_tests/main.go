@@ -7,6 +7,7 @@ import (
 	"time"
 
 	circle "github.com/Shyp/go-circle"
+	"github.com/Shyp/go-git"
 	"github.com/kevinburke/bigtext"
 )
 
@@ -34,7 +35,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "too many arguments provided\n")
 		os.Exit(1)
 	} else if len(args) == 0 {
-		branch = "master"
+		branchName, err := git.CurrentBranch()
+		checkError(err)
+		branch = branchName
 	} else {
 		branch = args[0]
 	}
