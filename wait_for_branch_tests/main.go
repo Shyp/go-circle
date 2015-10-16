@@ -16,6 +16,12 @@ var help = `Usage: wait_for_circle [branch]
 	branch: Name of the branch to wait for (defaults to "master")
 `
 
+func init() {
+	flag.Usage = func() {
+		fmt.Printf(help)
+	}
+}
+
 func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
