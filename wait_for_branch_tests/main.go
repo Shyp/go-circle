@@ -47,6 +47,7 @@ func main() {
 	} else {
 		branch = args[0]
 	}
+	fmt.Println("Waiting for latest build on", branch, "to complete")
 	for {
 		cr, err := circle.GetTree("Shyp", "shyp_api", branch)
 		checkError(err)
@@ -61,8 +62,9 @@ func main() {
 			duration = roundDuration(duration, time.Second)
 		}
 		if latestBuild.Status == "success" || latestBuild.Status == "fixed" {
-			fmt.Printf("Complete! Tests took %s. Quitting.\n", duration.String())
-			bigtext.Display("done")
+			fmt.Printf("Build on %s complete! Tests took %s. Quitting.\n", branch,
+				duration.String())
+			bigtext.Display(fmt.Sprintf("%s done", branch))
 			break
 		} else if latestBuild.Status == "failed" {
 			fmt.Printf("Build failed! URL: %s\n", latestBuild.BuildURL)
