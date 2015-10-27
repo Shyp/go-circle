@@ -48,6 +48,8 @@ func main() {
 		branch = args[0]
 	}
 	fmt.Println("Waiting for latest build on", branch, "to complete")
+	// Give CircleCI a little bit of time to start
+	time.Sleep(3 * time.Second)
 	for {
 		cr, err := circle.GetTree("Shyp", "shyp_api", branch)
 		checkError(err)
@@ -76,7 +78,11 @@ func main() {
 			} else {
 				fmt.Printf("Status is %s, trying again\n", latestBuild.Status)
 			}
-			time.Sleep(5 * time.Second)
+			if float32(duration) < (2.5 * float32(time.Minute)) {
+				time.Sleep(10 * time.Second)
+			} else {
+				time.Sleep(5 * time.Second)
+			}
 		}
 	}
 }
