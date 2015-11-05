@@ -7,13 +7,13 @@ import (
 	"time"
 
 	circle "github.com/Shyp/go-circle"
-	"github.com/Shyp/go-git"
+	git "github.com/Shyp/go-git"
 	"github.com/kevinburke/bigtext"
 )
 
 var help = `Usage: wait_for_circle [branch]
 
-	branch: Name of the branch to wait for (defaults to "master")
+	branch: Name of the branch to wait for (defaults to your current git branch)
 `
 
 func init() {
@@ -47,12 +47,19 @@ func main() {
 	} else {
 		branch = args[0]
 	}
+	remote, err := git.GetRemoteURL("origin")
+	checkError(err)
 	fmt.Println("Waiting for latest build on", branch, "to complete")
 	// Give CircleCI a little bit of time to start
 	time.Sleep(3 * time.Second)
 	for {
-		cr, err := circle.GetTree("Shyp", "shyp_api", branch)
+		cr, err := circle.GetTree(remote.Path, remote.RepoName, branch)
 		checkError(err)
+		if len(*cr) == 0 {
+			fmt.Printf("No results, are you sure there are tests for %s/%s?\n",
+				remote.Path, remote.RepoName)
+			break
+		}
 		latestBuild := (*cr)[0]
 		var duration time.Duration
 		if latestBuild.StartTime.Valid {
