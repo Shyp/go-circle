@@ -19,6 +19,8 @@ Usage:
 
 The commands are:
 
+	update          Update to the latest version
+	version         Print the current version
 	wait            Wait for tests to finish on a branch.
 
 Use "circle help [command]" for more information about a command.
@@ -143,6 +145,12 @@ func main() {
 		return
 	}
 	switch os.Args[1] {
+	case "version":
+		fmt.Fprintf(os.Stderr, "circle version %s\n", circle.VERSION)
+		os.Exit(0)
+	case "update":
+		err := equinoxUpdate()
+		checkError(err)
 	case "wait":
 		waitflags.Parse(os.Args[2:])
 		doWait(waitflags)

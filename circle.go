@@ -17,7 +17,7 @@ func init() {
 }
 
 const baseUri = "https://circleci.com/api/v1/project"
-const VERSION = "0.2"
+const VERSION = "0.4"
 
 type TreeBuild struct {
 	BuildNum    int            `json:"build_num"`
