@@ -10,7 +10,9 @@ import (
 )
 
 // Unmarshallable URL
-type URL url.URL
+type URL struct {
+	*url.URL
+}
 
 func (oururl *URL) UnmarshalJSON(b []byte) error {
 	// extra hop here to strip the leading/trailing quotes
@@ -23,7 +25,7 @@ func (oururl *URL) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	*oururl = URL(*u)
+	*oururl = URL{u}
 	return nil
 }
 

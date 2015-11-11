@@ -2,7 +2,6 @@ package circle
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -31,7 +30,6 @@ func TestURL(t *testing.T) {
 	if u.Scheme != "https" {
 		t.Fatalf("expected scheme to be 'https', url was %s", u)
 	}
-	t.Fatal()
 }
 
 func TestString(t *testing.T) {
@@ -39,7 +37,8 @@ func TestString(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(u.String())
-	//cu := URL(*u)
-	//fmt.Println(cu.String())
+	cu := URL{u}
+	if cu.String() != "https://foo.com" {
+		t.Fatalf("expected cu.String() to be https://foo.com, was %s", cu.String())
+	}
 }
