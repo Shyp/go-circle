@@ -47,7 +47,7 @@ func BuildStatistics(cb *CircleBuild) string {
 				dur = roundDuration(action.Runtime, time.Millisecond*10)
 			}
 			var durString string
-			if (action.Status == "failed" || action.Status == "timedout") && isatty() {
+			if action.Failed() && isatty() {
 				durString = fmt.Sprintf("\033[38;05;160m%-8s\033[0m", dur.String())
 			} else {
 				durString = fmt.Sprintf("%-8s", dur.String())

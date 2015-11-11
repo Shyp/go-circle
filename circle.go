@@ -28,6 +28,14 @@ type TreeBuild struct {
 	VCSRevision string         `json:"vcs_revision"`
 }
 
+func (tb *TreeBuild) Passed() bool {
+	return tb.Status == "success" || tb.Status == "fixed"
+}
+
+func (tb *TreeBuild) Failed() bool {
+	return tb.Status == "failed" || tb.Status == "timedout"
+}
+
 type CircleBuild struct {
 	Parallel uint8  `json:"parallel"`
 	Steps    []Step `json:"steps"`
@@ -43,6 +51,10 @@ type Action struct {
 	OutputURL URL            `json:"output_url"`
 	Runtime   CircleDuration `json:"run_time_millis"`
 	Status    string         `json:"status"`
+}
+
+func (a *Action) Failed() bool {
+	return a.Status == "failed" || a.Status == "timedout"
 }
 
 func getTreeUri(org string, project string, branch string, token string) string {

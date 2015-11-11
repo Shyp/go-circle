@@ -99,13 +99,13 @@ func main() {
 			}
 			duration = roundDuration(duration, time.Second)
 		}
-		if latestBuild.Status == "success" || latestBuild.Status == "fixed" {
+		if latestBuild.Passed() {
 			fmt.Printf("Build on %s complete!\n\n", branch)
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nTests took %s. Quitting.\n", duration.String())
 			bigtext.Display(fmt.Sprintf("%s done", branch))
 			break
-		} else if latestBuild.Status == "failed" || latestBuild.Status == "timedout" {
+		} else if latestBuild.Failed() {
 			fmt.Printf("Build failed!\n\n")
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nURL: %s\n", latestBuild.BuildURL)
