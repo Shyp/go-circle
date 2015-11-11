@@ -11,15 +11,27 @@ import (
 	"github.com/kevinburke/bigtext"
 )
 
-var help = `Usage: wait_for_circle [branch]
+var help = `The circle binary interacts with a server that runs your tests.
 
-	branch: Name of the branch to wait for (defaults to your current git branch)
+Usage: 
+
+	circle command [arguments]
+
+The commands are:
+
+	wait            Wait for tests to finish on a branch.
+
+Use "circle help [command]" for more information about a command.
 `
 
+func usage() {
+	fmt.Fprintf(os.Stderr, help)
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
 func init() {
-	flag.Usage = func() {
-		fmt.Printf(help)
-	}
+	flag.Usage = usage
 }
 
 func checkError(err error) {
@@ -42,20 +54,17 @@ func getStats(org string, project string, buildNum int) string {
 	return circle.BuildStatistics(build)
 }
 
-func main() {
-	flag.Parse()
-	args := flag.Args()
+func doWait(flags *flag.FlagSet) {
+	args := flags.Args()
 	var branch string
-	if len(args) > 1 {
-		fmt.Fprintf(os.Stderr, "too many arguments provided\n")
-		os.Exit(1)
-	} else if len(args) == 0 {
+	if len(args) == 0 {
 		branchName, err := git.CurrentBranch()
 		checkError(err)
 		branch = branchName
 	} else {
 		branch = args[0]
 	}
+
 	remote, err := git.GetRemoteURL("origin")
 	checkError(err)
 	tip, err := git.Tip(branch)
@@ -123,5 +132,21 @@ func main() {
 				time.Sleep(5 * time.Second)
 			}
 		}
+	}
+}
+
+func main() {
+	waitflags := flag.NewFlagSet("wait", flag.ExitOnError)
+
+	if len(os.Args) < 2 {
+		usage()
+		return
+	}
+	switch os.Args[1] {
+	case "wait":
+		waitflags.Parse(os.Args[2:])
+		doWait(waitflags)
+	default:
+		usage()
 	}
 }
