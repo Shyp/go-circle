@@ -3,57 +3,60 @@ package circle
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
 
+var client http.Client
+
+func init() {
+	client = http.Client{
+		Timeout: 10 * time.Second,
+	}
+}
+
 const baseUri = "https://circleci.com/api/v1/project"
 const VERSION = "0.1"
 
-type CircleNullTime struct {
-	Time  time.Time
-	Valid bool
+type TreeBuild struct {
+	BuildNum    int            `json:"build_num"`
+	BuildURL    string         `json:"build_url"`
+	Status      string         `json:"status"`
+	StartTime   CircleNullTime `json:"start_time"`
+	StopTime    CircleNullTime `json:"stop_time"`
+	VCSRevision string         `json:"vcs_revision"`
 }
 
-// Necessary because Circle returns "null" for some time instances
-func (nt *CircleNullTime) UnmarshalJSON(b []byte) error {
-	if string(b) == "null" {
-		nt.Valid = false
-		return nil
-	}
-	var t time.Time
-	err := json.Unmarshal(b, &t)
-	if err != nil {
-		return err
-	}
-	nt.Valid = true
-	nt.Time = t
-	return nil
+type CircleBuild struct {
+	Parallel uint8  `json:"parallel"`
+	Steps    []Step `json:"steps"`
 }
 
-type Build struct {
-	BuildURL  string         `json:"build_url"`
+type Step struct {
+	Name    string   `json:"name"`
+	Actions []Action `json:"actions"`
+}
+
+type Action struct {
+	Name      string         `json:"name"`
+	OutputURL URL            `json:"output_url"`
+	Runtime   CircleDuration `json:"run_time_millis"`
 	Status    string         `json:"status"`
-	StartTime CircleNullTime `json:"start_time"`
-	StopTime  CircleNullTime `json:"stop_time"`
 }
 
 func getTreeUri(org string, project string, branch string, token string) string {
 	return fmt.Sprintf("%s/%s/%s/tree/%s?circle-token=%s", baseUri, org, project, branch, token)
 }
 
-type CircleResponse []Build
+func getBuildUri(org string, project string, build int, token string) string {
+	return fmt.Sprintf("%s/%s/%s/%d?circle-token=%s", baseUri, org, project, build, token)
+}
 
-func GetTree(org string, project string, branch string) (*CircleResponse, error) {
-	token, err := getToken(org)
-	if err != nil {
-		return nil, err
-	}
-	uri := getTreeUri(org, project, branch, token)
-	client := http.Client{
-		Timeout: 10 * time.Second,
-	}
-	req, err := http.NewRequest("GET", uri, nil)
+type CircleTreeResponse []TreeBuild
+
+func makeRequest(method, uri string) (io.ReadCloser, error) {
+	req, err := http.NewRequest(method, uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +67,36 @@ func GetTree(org string, project string, branch string) (*CircleResponse, error)
 		fmt.Println("request error")
 		return nil, err
 	}
-	defer resp.Body.Close()
-	var cr CircleResponse
-	d := json.NewDecoder(resp.Body)
+	return resp.Body, nil
+}
+
+func GetTree(org string, project string, branch string) (*CircleTreeResponse, error) {
+	token, err := getToken(org)
+	if err != nil {
+		return nil, err
+	}
+	uri := getTreeUri(org, project, branch, token)
+	body, err := makeRequest("GET", uri)
+	defer body.Close()
+	var cr CircleTreeResponse
+	d := json.NewDecoder(body)
 	err = d.Decode(&cr)
 	return &cr, err
+}
+
+func GetBuild(org string, project string, buildNum int) (*CircleBuild, error) {
+	token, err := getToken(org)
+	if err != nil {
+		return nil, err
+	}
+	uri := getBuildUri(org, project, buildNum, token)
+	body, err := makeRequest("GET", uri)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	var cb CircleBuild
+	d := json.NewDecoder(body)
+	err = d.Decode(&cb)
+	return &cb, err
 }
