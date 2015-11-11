@@ -24,7 +24,7 @@ You can specify any org name you want.
 
 ## Wait for tests to pass/fail on a branch
 
-If you want to be notified when your tests finish running, run
-`wait_for_branch_tests [branchname]`. The interface for that will certainly
-change as well; we should be able to determine which organization/project to
-run tests for by checking your Git remotes.
+If you want to be notified when your tests finish running, run `circle wait
+[branchname]`. The interface for that will certainly change as well; we should
+be able to determine which organization/project to run tests for by checking
+your Git remotes.
