@@ -34,6 +34,9 @@ environment (I set it to `~/code/go`), then run
 go install github.com/Shyp/go-circle/...
 ```
 
+This should place a `circle` binary in `$GOPATH/bin`, so for me,
+`~/code/go/bin/circle`.
+
 [download]: https://dl.equinox.io/shyp/circle/stable
 
 ## Wait for tests to pass/fail on a branch
