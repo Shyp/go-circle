@@ -22,6 +22,20 @@ this:
 
 You can specify any org name you want.
 
+## Installation
+
+If you just want the binary, [download it from Equinox.io][download] and place
+the `circle` file somewhere on your `$PATH`.
+
+If you want to install the project, first set your `$GOPATH` in your
+environment (I set it to `~/code/go`), then run
+
+```
+go install github.com/Shyp/go-circle/...
+```
+
+[download]: https://dl.equinox.io/shyp/circle/stable
+
 ## Wait for tests to pass/fail on a branch
 
 If you want to be notified when your tests finish running, run `circle wait
