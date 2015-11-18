@@ -24,11 +24,21 @@ func getToken(org string) (string, error) {
 	}
 	filename := filepath.Join(user.HomeDir, "cfg", "circleci")
 	f, err := os.Open(filename)
+	rcFilename := ""
 	if err != nil {
-		filename := filepath.Join(user.HomeDir, ".circlerc")
-		f, err = os.Open(filename)
+		rcFilename = filepath.Join(user.HomeDir, ".circlerc")
+		f, err = os.Open(rcFilename)
 	}
 	if err != nil {
+		err = fmt.Errorf(`Couldn't find a config file in %s or %s.
+
+Add a configuration file with your CircleCI token, like this:
+
+[organizations]
+
+    [organizations.Shyp]
+    token = "aabbccddeeff00"
+`, filename, rcFilename)
 		return "", err
 	}
 	var c CircleConfig
