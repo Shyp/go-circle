@@ -121,7 +121,7 @@ func doWait(flags *flag.FlagSet) {
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nURL: %s\n", latestBuild.BuildURL)
 			bigtext.Display("build failed")
-			break
+			os.Exit(1)
 		} else {
 			if latestBuild.Status == "running" {
 				fmt.Printf("Running (%s elapsed)\n", duration.String())
