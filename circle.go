@@ -89,6 +89,9 @@ func GetTree(org string, project string, branch string) (*CircleTreeResponse, er
 	}
 	uri := getTreeUri(org, project, branch, token)
 	body, err := makeRequest("GET", uri)
+	if err != nil {
+		return nil, err
+	}
 	defer body.Close()
 	var cr CircleTreeResponse
 	d := json.NewDecoder(body)
