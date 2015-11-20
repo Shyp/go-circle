@@ -45,3 +45,8 @@ If you want to be notified when your tests finish running, run `circle wait
 [branchname]`. The interface for that will certainly change as well; we should
 be able to determine which organization/project to run tests for by checking
 your Git remotes.
+
+It's pretty neat! Here's a screenshot.
+
+<img src="https://monosnap.com/file/49h2NvVwxDBtHWlphAGiqzdJFDB7xy.png"
+alt="CircleCI screenshot">
