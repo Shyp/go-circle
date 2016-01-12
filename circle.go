@@ -76,7 +76,6 @@ func makeRequest(method, uri string) (io.ReadCloser, error) {
 	req.Header.Add("User-Agent", fmt.Sprintf("circle-command-line-client/%s", VERSION))
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("request error")
 		return nil, err
 	}
 	return resp.Body, nil
