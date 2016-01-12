@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -17,7 +18,26 @@ type organization struct {
 	Token string
 }
 
-func getToken(org string) (string, error) {
+// getCaseInsensitiveOrg finds the key in the list of orgs. This is a case
+// insensitive match, so if key is "ShyP" and orgs has a key named "sHYp",
+// that will count as a match.
+func getCaseInsensitiveOrg(key string, orgs map[string]organization) (organization, error) {
+	for k, _ := range orgs {
+		lower := strings.ToLower(k)
+		if _, ok := orgs[lower]; !ok {
+			orgs[lower] = orgs[k]
+			delete(orgs, k)
+		}
+	}
+	lowerKey := strings.ToLower(key)
+	if o, ok := orgs[lowerKey]; ok {
+		return o, nil
+	} else {
+		return organization{}, fmt.Errorf("Couldn't find organization %s in the config", key)
+	}
+}
+
+func getToken(orgName string) (string, error) {
 	user, err := user.Current()
 	if err != nil {
 		return "", err
@@ -48,9 +68,9 @@ Go to https://circleci.com/account/api if you need to create a token.
 	if err != nil {
 		return "", err
 	}
-	if organization, ok := c.Organizations[org]; ok {
-		return organization.Token, nil
-	} else {
-		return "", fmt.Errorf("Couldn't find organization %s in the config", org)
+	org, err := getCaseInsensitiveOrg(orgName, c.Organizations)
+	if err != nil {
+		return "", err
 	}
+	return org.Token, nil
 }
