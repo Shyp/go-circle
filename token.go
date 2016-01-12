@@ -38,6 +38,8 @@ Add a configuration file with your CircleCI token, like this:
 
     [organizations.Shyp]
     token = "aabbccddeeff00"
+
+Go to https://circleci.com/account/api if you need to create a token.
 `, filename, rcFilename)
 		return "", err
 	}
