@@ -103,7 +103,7 @@ func Wait(branch string) error {
 			duration = roundDuration(duration, time.Second)
 		}
 		if latestBuild.Passed() {
-			fmt.Printf("Build on %s complete!\n\n", branch)
+			fmt.Printf("Build on %s succeeded!\n\n", branch)
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nTests on %s took %s. Quitting.\n", branch, duration.String())
 			bigtext.Display(fmt.Sprintf("%s done", branch))
@@ -111,7 +111,7 @@ func Wait(branch string) error {
 		} else if latestBuild.Failed() {
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nURL: %s\n", latestBuild.BuildURL)
-			err = fmt.Errorf("Build %s failed!\n\n", branch)
+			err = fmt.Errorf("Build on %s failed!\n\n", branch)
 			bigtext.Display("build failed")
 			return err
 		} else {
