@@ -16,7 +16,7 @@ func init() {
 	}
 }
 
-const VERSION = "0.11"
+const VERSION = "0.12"
 const baseUri = "https://circleci.com/api/v1/project"
 
 type TreeBuild struct {
