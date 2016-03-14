@@ -44,7 +44,6 @@ func isHttpError(err error) bool {
 	case net.Error:
 		return err.Timeout() || err.Temporary()
 	}
-	return false
 }
 
 func Wait(branch string) error {
@@ -72,7 +71,6 @@ func Wait(branch string) error {
 		if len(*cr) == 0 {
 			return fmt.Errorf("No results, are you sure there are tests for %s/%s?\n",
 				remote.Path, remote.RepoName)
-			break
 		}
 		latestBuild := (*cr)[0]
 		var vcsLen int
@@ -120,10 +118,35 @@ func Wait(branch string) error {
 			} else {
 				fmt.Printf("Status is %s, trying again\n", latestBuild.Status)
 			}
-			if float32(duration) < (2.5 * float32(time.Minute)) {
-				time.Sleep(10 * time.Second)
+			// Sleep less and less as we approach the duration of the previous
+			// successful build
+			buildDuration := time.Duration(latestBuild.Previous.BuildDurationMs) * time.Millisecond
+			if latestBuild.Previous.Status == "success" || latestBuild.Previous.Status == "fixed" {
+				if duration < time.Minute {
+					// First minute, errors are slightly more likely.
+					time.Sleep(5 * time.Second)
+				} else {
+					timeRemaining := buildDuration - duration
+					if timeRemaining > 5*time.Minute {
+						time.Sleep(30 * time.Second)
+					} else if timeRemaining > 3*time.Minute {
+						time.Sleep(20 * time.Second)
+					} else if timeRemaining > time.Minute {
+						time.Sleep(15 * time.Second)
+					} else if timeRemaining > 30*time.Second {
+						time.Sleep(10 * time.Second)
+					} else if timeRemaining > 10*time.Second {
+						time.Sleep(5 * time.Second)
+					} else {
+						time.Sleep(3 * time.Second)
+					}
+				}
 			} else {
-				time.Sleep(5 * time.Second)
+				if float32(duration) < (2.5 * float32(time.Minute)) {
+					time.Sleep(10 * time.Second)
+				} else {
+					time.Sleep(5 * time.Second)
+				}
 			}
 		}
 	}

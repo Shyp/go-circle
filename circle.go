@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -20,8 +21,11 @@ const VERSION = "0.12"
 const baseUri = "https://circleci.com/api/v1/project"
 
 type TreeBuild struct {
-	BuildNum    int            `json:"build_num"`
-	BuildURL    string         `json:"build_url"`
+	BuildNum int    `json:"build_num"`
+	BuildURL string `json:"build_url"`
+	// Tree builds have a `previous_successful_build` field but as far as I can
+	// tell it is always null. Instead this field is set
+	Previous    PreviousBuild  `json:"previous"`
 	Status      string         `json:"status"`
 	StartTime   CircleNullTime `json:"start_time"`
 	StopTime    CircleNullTime `json:"stop_time"`
@@ -37,8 +41,18 @@ func (tb *TreeBuild) Failed() bool {
 }
 
 type CircleBuild struct {
-	Parallel uint8  `json:"parallel"`
-	Steps    []Step `json:"steps"`
+	Parallel                uint8         `json:"parallel"`
+	PreviousSuccessfulBuild PreviousBuild `json:"previous_successful_build"`
+	Steps                   []Step        `json:"steps"`
+}
+
+type PreviousBuild struct {
+	BuildNum int `json:"build_num"`
+	// would be neat to make this a time.Duration, easier to use the passed in
+	// value.
+	Status string `json:"status"`
+
+	BuildDurationMs int `json:"build_time_millis"`
 }
 
 type Step struct {
@@ -93,7 +107,14 @@ func GetTree(org string, project string, branch string) (*CircleTreeResponse, er
 	}
 	defer body.Close()
 	var cr CircleTreeResponse
-	d := json.NewDecoder(body)
+	var r io.Reader
+	if os.Getenv("CIRCLE_DEBUG") == "true" {
+		fmt.Println("getting tree build")
+		r = io.TeeReader(body, os.Stdout)
+	} else {
+		r = body
+	}
+	d := json.NewDecoder(r)
 	err = d.Decode(&cr)
 	return &cr, err
 }
@@ -109,8 +130,14 @@ func GetBuild(org string, project string, buildNum int) (*CircleBuild, error) {
 		return nil, err
 	}
 	defer body.Close()
+	var r io.Reader
+	if os.Getenv("CIRCLE_DEBUG") == "true" {
+		r = io.TeeReader(body, os.Stdout)
+	} else {
+		r = body
+	}
+	d := json.NewDecoder(r)
 	var cb CircleBuild
-	d := json.NewDecoder(body)
 	err = d.Decode(&cb)
 	return &cb, err
 }
