@@ -9,3 +9,6 @@ build:
 
 test: install
 	go test -v -race ./...
+
+release:
+	bump_version minor circle.go
