@@ -104,13 +104,21 @@ func Wait(branch string) error {
 			fmt.Printf("Build on %s succeeded!\n\n", branch)
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nTests on %s took %s. Quitting.\n", branch, duration.String())
-			bigtext.Display(fmt.Sprintf("%s done", branch))
+			c := bigtext.Client{
+				Name:    fmt.Sprintf("%s (go-circle)", remote.RepoName),
+				OpenURL: latestBuild.BuildURL,
+			}
+			c.Display(fmt.Sprintf("%s build complete!", branch))
 			break
 		} else if latestBuild.Failed() {
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nURL: %s\n", latestBuild.BuildURL)
 			err = fmt.Errorf("Build on %s failed!\n\n", branch)
-			bigtext.Display("build failed")
+			c := bigtext.Client{
+				Name:    fmt.Sprintf("%s (go-circle)", remote.RepoName),
+				OpenURL: latestBuild.BuildURL,
+			}
+			c.Display("build failed")
 			return err
 		} else {
 			if latestBuild.Status == "running" {
