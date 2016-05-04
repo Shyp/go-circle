@@ -123,6 +123,8 @@ func Wait(branch string) error {
 		} else {
 			if latestBuild.Status == "running" {
 				fmt.Printf("Running (%s elapsed)\n", duration.String())
+			} else if latestBuild.NotRunning() {
+				fmt.Printf("Status is %s (queued for %s), trying again\n", latestBuild.Status, duration.String())
 			} else {
 				fmt.Printf("Status is %s, trying again\n", latestBuild.Status)
 			}
