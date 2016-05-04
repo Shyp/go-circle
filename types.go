@@ -29,11 +29,6 @@ func (oururl *URL) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type CircleNullTime struct {
-	Time  time.Time
-	Valid bool
-}
-
 type CircleDuration time.Duration
 
 func (cd *CircleDuration) UnmarshalJSON(b []byte) error {
@@ -43,21 +38,5 @@ func (cd *CircleDuration) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*cd = CircleDuration(d * time.Millisecond)
-	return nil
-}
-
-// Necessary because Circle returns "null" for some time instances
-func (nt *CircleNullTime) UnmarshalJSON(b []byte) error {
-	if string(b) == "null" {
-		nt.Valid = false
-		return nil
-	}
-	var t time.Time
-	err := json.Unmarshal(b, &t)
-	if err != nil {
-		return err
-	}
-	nt.Valid = true
-	nt.Time = t
 	return nil
 }
