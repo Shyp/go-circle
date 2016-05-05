@@ -35,3 +35,18 @@ func TestHttpError(t *testing.T) {
 		t.Fatalf("expected err to be http error, was %s", err)
 	}
 }
+
+func TestEffectiveCost(t *testing.T) {
+	cost := getEffectiveCost(1 * time.Hour)
+	if cost != 7897 {
+		t.Errorf("expected 1 hour cost to be %d, was %d", 7897, cost)
+	}
+	cost = getEffectiveCost(30 * time.Minute)
+	if cost != 3948 {
+		t.Errorf("expected half hour cost to be %d, was %d", 3948, cost)
+	}
+	cost = getEffectiveCost(2 * time.Hour)
+	if cost != 15793 {
+		t.Errorf("expected half hour cost to be %d, was %d", 15793, cost)
+	}
+}
