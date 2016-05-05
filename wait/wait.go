@@ -113,14 +113,20 @@ func Wait(branch string) error {
 			continue
 		}
 		var duration time.Duration
-		if latestBuild.UsageQueuedAt.Valid {
+		if latestBuild.QueuedAt.Valid {
+			if latestBuild.StopTime.Valid {
+				duration = latestBuild.StopTime.Time.Sub(latestBuild.QueuedAt.Time)
+			} else {
+				duration = time.Now().Sub(latestBuild.QueuedAt.Time)
+			}
+		} else if latestBuild.UsageQueuedAt.Valid {
 			if latestBuild.StopTime.Valid {
 				duration = latestBuild.StopTime.Time.Sub(latestBuild.UsageQueuedAt.Time)
 			} else {
 				duration = time.Now().Sub(latestBuild.UsageQueuedAt.Time)
 			}
-			duration = roundDuration(duration, time.Second)
 		}
+		duration = roundDuration(duration, time.Second)
 		if latestBuild.Passed() {
 			fmt.Printf("Build on %s succeeded!\n\n", branch)
 			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
