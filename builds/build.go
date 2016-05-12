@@ -4,8 +4,8 @@ import (
   "fmt"
   "time"
 
-  "github.com/Shyp/cli/Godeps/_workspace/src/github.com/Shyp/go-circle"
-  "github.com/Shyp/cli/Godeps/_workspace/src/github.com/Shyp/go-git"
+  "github.com/Shyp/go-circle"
+  "github.com/Shyp/go-git"
   "github.com/Shyp/cli/ansi"
 )
 
