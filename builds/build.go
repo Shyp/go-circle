@@ -6,7 +6,6 @@ import (
 
   "github.com/Shyp/go-circle"
   "github.com/Shyp/go-git"
-  "github.com/Shyp/cli/ansi"
 )
 
 func inSlice(a string, list []string) bool {
@@ -58,15 +57,15 @@ func GetBuilds(branch string) error {
 
     // Based on the status of the build, change the color of status print out
     if inSlice(status, green) {
-      status = ansi.Green(status)
+      status = fmt.Sprintf("\033[38;05;119m%-8s\033[0m", status)
     } else if inSlice(status, grey) {
-      status = ansi.Grey(status)
+      status = fmt.Sprintf("\033[38;05;0m%-8s\033[0m", status)
     } else if inSlice(status, red) {
-      status = ansi.Red(status)
+      status = fmt.Sprintf("\033[38;05;160m%-8s\033[0m", status)
     } else if inSlice(status, blue) {
-      status = ansi.Blue(status)
+      status = fmt.Sprintf("\033[38;05;80m%-8s\033[0m", status)
     } else {
-      status = ansi.Purple(status)
+      status = fmt.Sprintf("\033[38;05;20m%-8s\033[0m", status)
     }
 
     fmt.Println(url, status, ghUrl)

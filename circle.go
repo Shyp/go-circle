@@ -25,6 +25,7 @@ const baseUri = "https://circleci.com/api/v1/project"
 type TreeBuild struct {
 	BuildNum	int	`json:"build_num"`
 	BuildURL	string	`json:"build_url"`
+	CompareURL	string	`json:"compare"`
 	// Tree builds have a `previous_successful_build` field but as far as I can
 	// tell it is always null. Instead this field is set
 	Previous	PreviousBuild	`json:"previous"`
@@ -89,6 +90,10 @@ func getBuildUri(org string, project string, build int, token string) string {
 	return fmt.Sprintf("%s/%s/%s/%d?circle-token=%s", baseUri, org, project, build, token)
 }
 
+func getCancelUri(org string, project string, build int, token string) string {
+	return fmt.Sprintf("%s/%s/%s/%d/cancel?circle-token=%s", baseUri, org, project, build, token)
+}
+
 type CircleTreeResponse []TreeBuild
 
 func makeRequest(method, uri string) (io.ReadCloser, error) {
@@ -135,6 +140,29 @@ func GetBuild(org string, project string, buildNum int) (*CircleBuild, error) {
 	}
 	uri := getBuildUri(org, project, buildNum, token)
 	body, err := makeRequest("GET", uri)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	var r io.Reader
+	if os.Getenv("CIRCLE_DEBUG") == "true" {
+		r = io.TeeReader(body, os.Stdout)
+	} else {
+		r = body
+	}
+	d := json.NewDecoder(r)
+	var cb CircleBuild
+	err = d.Decode(&cb)
+	return &cb, err
+}
+
+func CancelBuild(org string, project string, buildNum int) (*CircleBuild, error) {
+	token, err := getToken(org)
+	if err != nil {
+		return nil, err
+	}
+	uri := getCancelUri(org, project, buildNum, token)
+	body, err := makeRequest("POST", uri)
 	if err != nil {
 		return nil, err
 	}
