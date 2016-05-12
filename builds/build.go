@@ -18,13 +18,6 @@ func inSlice(a string, list []string) bool {
 
 // GetBuilds gets the status of the 5 most recent Circle builds for a branch
 func GetBuilds(branch string) error {
-  // Different statuses Circle builds can have
-  green := []string{"fixed", "success"}
-  grey  := []string{"retried", "canceled", "not_run"}
-  red   := []string{"infrastructure_fail", "timedout", "failed", "no_tests"}
-  blue  := []string{"running"}
-  // purple := []string{"queued", "not_running", "scheduled"}
-
   // This throws if the branch doesn't exist
   if _, err := git.Tip(branch); err != nil {
     return err
@@ -49,16 +42,16 @@ func GetBuilds(branch string) error {
     ghUrl, url, status := build.CompareURL, build.BuildURL, build.Status
 
     // Based on the status of the build, change the color of status print out
-    if inSlice(status, green) {
+    if build.Passed() {
       status = fmt.Sprintf("\033[38;05;119m%-8s\033[0m", status)
-    } else if inSlice(status, grey) {
-      status = fmt.Sprintf("\033[38;05;0m%-8s\033[0m", status)
-    } else if inSlice(status, red) {
+    } else if build.NotRunning(){
+      status = fmt.Sprintf("\033[38;05;20m%-8s\033[0m", status)
+    } else if build.Failed() {
       status = fmt.Sprintf("\033[38;05;160m%-8s\033[0m", status)
-    } else if inSlice(status, blue) {
+    } else if build.Running() {
       status = fmt.Sprintf("\033[38;05;80m%-8s\033[0m", status)
     } else {
-      status = fmt.Sprintf("\033[38;05;20m%-8s\033[0m", status)
+      status = fmt.Sprintf("\033[38;05;0m%-8s\033[0m", status)
     }
 
     fmt.Println(url, status, ghUrl)

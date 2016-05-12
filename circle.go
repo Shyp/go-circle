@@ -42,11 +42,15 @@ func (tb TreeBuild) Passed() bool {
 }
 
 func (tb TreeBuild) NotRunning() bool {
-	return tb.Status == "not_running" || tb.Status == "scheduled"
+	return tb.Status == "not_running" || tb.Status == "scheduled" || tb.Status == "queued"
+}
+
+func (tb TreeBuild) Running() bool {
+	return tb.Status == "running"
 }
 
 func (tb TreeBuild) Failed() bool {
-	return tb.Status == "failed" || tb.Status == "timedout"
+	return tb.Status == "failed" || tb.Status == "timedout" || tb.Status == "no_tests" || tb.Status == "infrastructure_fail"
 }
 
 type CircleBuild struct {
