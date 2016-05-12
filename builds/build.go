@@ -26,16 +26,13 @@ func GetBuilds(branch string) error {
   blue  := []string{"running"}
   // purple := []string{"queued", "not_running", "scheduled"}
 
-  tip, err := git.Tip(branch)
-  _ = tip
+  _, err := git.Tip(branch)
   // This throws if the branch doesn't exist
   if err != nil {
     return err
   }
 
   fmt.Println("\nFetching recent builds for", branch, "starting with most recent commit\n")
-  // Give CircleCI a little bit of time to start
-  time.Sleep(1 * time.Second)
 
   remote, err := git.GetRemoteURL("origin")
   if err != nil {
@@ -46,8 +43,6 @@ func GetBuilds(branch string) error {
   if err != nil {
     return err
   }
-
-  sum := 0
 
   // Limited to 5 most recent builds. Feature would be to pass in number
   // of builds to fetch via command line args
@@ -70,7 +65,6 @@ func GetBuilds(branch string) error {
 
     fmt.Println(url, status, ghUrl)
 
-    sum += i
   }
 
   fmt.Println("\nMost recent build statuses fetched!")
@@ -80,9 +74,8 @@ func GetBuilds(branch string) error {
 
 // CancelBuild cancels a build (as specified by the build number)
 func CancelBuild(org string, project string, buildNum int) string {
-  fmt.Println("\nCanceling build", buildNum, "for", project, "\n")
-  build, err := circle.CancelBuild(org, project, buildNum)
-  _ = build
+  fmt.Printf("\nCanceling build: %d for %s\n\n", buildNum, project)
+  _, err := circle.CancelBuild(org, project, buildNum)
 
   if err != nil {
     return ""
