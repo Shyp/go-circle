@@ -2,7 +2,6 @@ package build
 
 import (
   "fmt"
-  "time"
 
   "github.com/Shyp/go-circle"
   "github.com/Shyp/go-git"
@@ -26,9 +25,8 @@ func GetBuilds(branch string) error {
   blue  := []string{"running"}
   // purple := []string{"queued", "not_running", "scheduled"}
 
-  _, err := git.Tip(branch)
   // This throws if the branch doesn't exist
-  if err != nil {
+  if _, err := git.Tip(branch); err != nil {
     return err
   }
 
@@ -75,12 +73,9 @@ func GetBuilds(branch string) error {
 // CancelBuild cancels a build (as specified by the build number)
 func CancelBuild(org string, project string, buildNum int) string {
   fmt.Printf("\nCanceling build: %d for %s\n\n", buildNum, project)
-  _, err := circle.CancelBuild(org, project, buildNum)
-
-  if err != nil {
+  if _, err := circle.CancelBuild(org, project, buildNum); err != nil {
     return ""
   }
 
-  fmt.Println("Verify status by running `shyp builds`")
   return ""
 }
