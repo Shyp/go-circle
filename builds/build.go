@@ -1,0 +1,74 @@
+package build
+
+import (
+  "fmt"
+
+  "github.com/Shyp/go-circle"
+  "github.com/Shyp/go-git"
+)
+
+func inSlice(a string, list []string) bool {
+  for _, b := range list {
+    if b == a {
+        return true
+    }
+  }
+  return false
+}
+
+// GetBuilds gets the status of the 5 most recent Circle builds for a branch
+func GetBuilds(branch string) error {
+  // This throws if the branch doesn't exist
+  if _, err := git.Tip(branch); err != nil {
+    return err
+  }
+
+  fmt.Println("\nFetching recent builds for", branch, "starting with most recent commit\n")
+
+  remote, err := git.GetRemoteURL("origin")
+  if err != nil {
+    return err
+  }
+
+  cr, err := circle.GetTree(remote.Path, remote.RepoName, branch)
+  if err != nil {
+    return err
+  }
+
+  // Limited to 5 most recent builds. Feature would be to pass in number
+  // of builds to fetch via command line args
+  for i := 0; i < 5; i++ {
+    build := (*cr)[i]
+    ghUrl, url, status := build.CompareURL, build.BuildURL, build.Status
+
+    // Based on the status of the build, change the color of status print out
+    if build.Passed() {
+      status = fmt.Sprintf("\033[38;05;119m%-8s\033[0m", status)
+    } else if build.NotRunning(){
+      status = fmt.Sprintf("\033[38;05;20m%-8s\033[0m", status)
+    } else if build.Failed() {
+      status = fmt.Sprintf("\033[38;05;160m%-8s\033[0m", status)
+    } else if build.Running() {
+      status = fmt.Sprintf("\033[38;05;80m%-8s\033[0m", status)
+    } else {
+      status = fmt.Sprintf("\033[38;05;0m%-8s\033[0m", status)
+    }
+
+    fmt.Println(url, status, ghUrl)
+
+  }
+
+  fmt.Println("\nMost recent build statuses fetched!")
+
+  return nil
+}
+
+// CancelBuild cancels a build (as specified by the build number)
+func CancelBuild(org string, project string, buildNum int) string {
+  fmt.Printf("\nCanceling build: %d for %s\n\n", buildNum, project)
+  if _, err := circle.CancelBuild(org, project, buildNum); err != nil {
+    return ""
+  }
+
+  return ""
+}
