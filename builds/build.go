@@ -35,9 +35,15 @@ func GetBuilds(branch string) error {
     return err
   }
 
-  // Limited to 5 most recent builds. Feature would be to pass in number
-  // of builds to fetch via command line args
-  for i := 0; i < 5; i++ {
+  buildCount := 0
+
+  if len(*cr) < 5 {
+    buildCount = len(*cr)
+  } else {
+    buildCount = 5 // Limited to 5 most recent builds.
+  }
+
+  for i := 0; i < buildCount; i++ {
     build := (*cr)[i]
     ghUrl, url, status := build.CompareURL, build.BuildURL, build.Status
 
