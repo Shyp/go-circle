@@ -3,7 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
+	"strconv"
+	"sync"
 
 	circle "github.com/Shyp/go-circle"
 	"github.com/Shyp/go-circle/wait"
@@ -11,7 +15,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-var help = `The circle binary interacts with a server that runs your tests.
+const help = `The circle binary interacts with a server that runs your tests.
 
 Usage: 
 
@@ -19,13 +23,16 @@ Usage:
 
 The commands are:
 
-	open            Open the latest branch build in a browser.
-	update          Update to the latest version
-	version         Print the current version
-	wait            Wait for tests to finish on a branch.
+	open                Open the latest branch build in a browser.
+	update              Update to the latest version
+	version             Print the current version
+	wait                Wait for tests to finish on a branch.
+	download-artifacts  Download all artifacts.
 
 Use "circle help [command]" for more information about a command.
 `
+
+const downloadUsage = `usage: download-artifacts <build-num>`
 
 func usage() {
 	fmt.Fprintf(os.Stderr, help)
@@ -39,9 +46,7 @@ func init() {
 
 func checkError(err error) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		fmt.Fprintf(os.Stderr, "\n")
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
@@ -72,15 +77,56 @@ func doOpen(flags *flag.FlagSet) {
 	open.Start(latestBuild.BuildURL)
 }
 
+func doDownload(flags *flag.FlagSet) error {
+	buildStr := flags.Arg(0)
+	val, err := strconv.Atoi(buildStr)
+	if err != nil {
+		return err
+	}
+	remote, err := git.GetRemoteURL("origin")
+	if err != nil {
+		return err
+	}
+	arts, err := circle.GetArtifactsForBuild(remote.Path, remote.RepoName, val)
+	if err != nil {
+		return err
+	}
+	var wg sync.WaitGroup
+	tempDir, err := ioutil.TempDir("", "circle-artifacts")
+	if err != nil {
+		return err
+	}
+	for _, art := range arts {
+		wg.Add(1)
+		go func(a *circle.CircleArtifact) {
+			if err := circle.DownloadArtifact(a, tempDir, remote.Path); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			wg.Done()
+		}(art)
+	}
+	wg.Wait()
+	fmt.Fprintf(os.Stderr, "Wrote all artifacts for build %d to %s\n", val, tempDir)
+	return nil
+}
+
 func main() {
 	waitflags := flag.NewFlagSet("wait", flag.ExitOnError)
 	openflags := flag.NewFlagSet("open", flag.ExitOnError)
+	downloadflags := flag.NewFlagSet("download-artifacts", flag.ExitOnError)
+	downloadflags.Usage = func() {
+		fmt.Fprintf(os.Stderr, "%s\n\n", downloadUsage)
+		downloadflags.PrintDefaults()
+		os.Exit(1)
+	}
 
-	if len(os.Args) < 2 {
+	flag.Parse()
+	args := flag.Args()
+	if len(args) < 1 {
 		usage()
 		return
 	}
-	switch os.Args[1] {
+	switch flag.Arg(0) {
 	case "open":
 		openflags.Parse(os.Args[2:])
 		doOpen(openflags)
@@ -89,7 +135,7 @@ func main() {
 		checkError(err)
 	case "version":
 		fmt.Fprintf(os.Stderr, "circle version %s\n", circle.VERSION)
-		os.Exit(0)
+		os.Exit(1)
 	case "wait":
 		waitflags.Parse(os.Args[2:])
 		args := waitflags.Args()
@@ -97,6 +143,16 @@ func main() {
 		checkError(err)
 		err = wait.Wait(branch)
 		checkError(err)
+	case "download-artifacts":
+		if len(args) == 1 {
+			fmt.Fprintf(os.Stderr, "usage: download-artifacts <build-number>\n")
+			os.Exit(1)
+		}
+		downloadflags.Parse(args[1:])
+		if err := doDownload(downloadflags); err != nil {
+			log.Fatal(err)
+		}
+
 	default:
 		usage()
 	}
