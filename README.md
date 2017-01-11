@@ -1,5 +1,7 @@
 # go-circle
 
+[![CircleCI](https://circleci.com/gh/Shyp/go-circle.svg?style=svg)](https://circleci.com/gh/Shyp/go-circle)
+
 This is a very incomplete wrapper for the CircleCI API. Currently we use it to
 fetch the latest build for a branch.
 
