@@ -1,5 +1,3 @@
 # Docs: https://circleci.com/docs/language-go/
 
-test:
-  pre:
-    - go version
+
