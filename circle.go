@@ -124,6 +124,12 @@ func makeRequest(method, uri string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if resp.StatusCode >= 400 {
+		// TODO handle build not found, you get back {"message": "Build not found"}
+		return nil, fmt.Errorf("Request failed with status [%d]", resp.StatusCode)
+	}
+
 	return resp.Body, nil
 }
 
@@ -179,7 +185,6 @@ func GetArtifactsForBuild(org string, project string, buildNum int) ([]*CircleAr
 		return []*CircleArtifact{}, err
 	}
 	uri := getArtifactsUri(org, project, buildNum, token)
-	// TODO handle build not found, you get back {"message": "Build not found"}
 	body, err := makeRequest("GET", uri)
 	if err != nil {
 		return []*CircleArtifact{}, err
