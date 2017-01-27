@@ -7,12 +7,12 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"sync"
 
 	circle "github.com/Shyp/go-circle"
 	"github.com/Shyp/go-circle/wait"
 	git "github.com/Shyp/go-git"
 	"github.com/skratchdot/open-golang/open"
+	"golang.org/x/sync/errgroup"
 )
 
 const help = `The circle binary interacts with a server that runs your tests.
@@ -91,21 +91,22 @@ func doDownload(flags *flag.FlagSet) error {
 	if err != nil {
 		return err
 	}
-	var wg sync.WaitGroup
+	var g errgroup.Group
 	tempDir, err := ioutil.TempDir("", "circle-artifacts")
 	if err != nil {
 		return err
 	}
 	for _, art := range arts {
-		wg.Add(1)
-		go func(a *circle.CircleArtifact) {
-			if err := circle.DownloadArtifact(a, tempDir, remote.Path); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			wg.Done()
-		}(art)
+		art := art
+		g.Go(func() error {
+			return circle.DownloadArtifact(art, tempDir, remote.Path)
+		})
 	}
-	wg.Wait()
+
+	if err := g.Wait(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return err
+	}
 	fmt.Fprintf(os.Stderr, "Wrote all artifacts for build %d to %s\n", val, tempDir)
 	return nil
 }
