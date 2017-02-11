@@ -113,6 +113,15 @@ func doDownload(flags *flag.FlagSet) error {
 
 func main() {
 	waitflags := flag.NewFlagSet("wait", flag.ExitOnError)
+	waitflags.Usage = func() {
+		fmt.Fprintf(os.Stderr, `usage: wait
+
+Wait for builds to complete, then print a descriptive output on 
+success or failure.
+`)
+		waitflags.PrintDefaults()
+		os.Exit(2)
+	}
 	openflags := flag.NewFlagSet("open", flag.ExitOnError)
 	downloadflags := flag.NewFlagSet("download-artifacts", flag.ExitOnError)
 	downloadflags.Usage = func() {
