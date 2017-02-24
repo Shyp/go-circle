@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 
@@ -37,7 +36,6 @@ const downloadUsage = `usage: download-artifacts <build-num>`
 func usage() {
 	fmt.Fprintf(os.Stderr, help)
 	flag.PrintDefaults()
-	os.Exit(2)
 }
 
 func init() {
@@ -46,7 +44,8 @@ func init() {
 
 func checkError(err error) {
 	if err != nil {
-		log.Fatal(err)
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(1)
 	}
 }
 
@@ -120,14 +119,12 @@ Wait for builds to complete, then print a descriptive output on
 success or failure.
 `)
 		waitflags.PrintDefaults()
-		os.Exit(2)
 	}
 	openflags := flag.NewFlagSet("open", flag.ExitOnError)
 	downloadflags := flag.NewFlagSet("download-artifacts", flag.ExitOnError)
 	downloadflags.Usage = func() {
 		fmt.Fprintf(os.Stderr, "%s\n\n", downloadUsage)
 		downloadflags.PrintDefaults()
-		os.Exit(1)
 	}
 
 	flag.Parse()
@@ -159,10 +156,8 @@ success or failure.
 			os.Exit(1)
 		}
 		downloadflags.Parse(args[1:])
-		if err := doDownload(downloadflags); err != nil {
-			log.Fatal(err)
-		}
-
+		err := doDownload(downloadflags)
+		checkError(err)
 	default:
 		usage()
 	}

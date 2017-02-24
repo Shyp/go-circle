@@ -1,6 +1,9 @@
 package circle
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestCaseInsensitive(t *testing.T) {
 	cfg := CircleConfig{
@@ -20,7 +23,7 @@ func TestCaseInsensitive(t *testing.T) {
 	if err == nil {
 		t.Fatalf("should not have found Shypmorelongname in the config, but did")
 	}
-	if err.Error() != "Couldn't find organization ShyPmorelongname in the config" {
+	if !strings.Contains(err.Error(), "Couldn't find organization ShyPmorelongname in the config") {
 		t.Fatalf("expected Couldn't find error message, got %v", err)
 	}
 }

@@ -15,6 +15,7 @@ func roundDuration(d time.Duration, unit time.Duration) time.Duration {
 	return ((d + unit/2) / unit) * unit
 }
 
+// getStats returns a string with statistics about a given build number.
 func getStats(org string, project string, buildNum int) string {
 	build, err := circle.GetBuild(org, project, buildNum)
 	if err != nil {
@@ -129,7 +130,7 @@ func Wait(branch string) error {
 		duration = roundDuration(duration, time.Second)
 		if latestBuild.Passed() {
 			fmt.Printf("Build on %s succeeded!\n\n", branch)
-			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
+			fmt.Print(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nTests on %s took %s. Quitting.\n", branch, duration.String())
 			c := bigtext.Client{
 				Name:    fmt.Sprintf("%s (go-circle)", remote.RepoName),
@@ -138,7 +139,7 @@ func Wait(branch string) error {
 			c.Display(fmt.Sprintf("%s build complete!", branch))
 			break
 		} else if latestBuild.Failed() {
-			fmt.Printf(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
+			fmt.Print(getStats(remote.Path, remote.RepoName, latestBuild.BuildNum))
 			fmt.Printf("\nURL: %s\n", latestBuild.BuildURL)
 			err = fmt.Errorf("Build on %s failed!\n\n", branch)
 			c := bigtext.Client{

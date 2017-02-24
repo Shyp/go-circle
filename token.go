@@ -33,7 +33,10 @@ func getCaseInsensitiveOrg(key string, orgs map[string]organization) (organizati
 	if o, ok := orgs[lowerKey]; ok {
 		return o, nil
 	} else {
-		return organization{}, fmt.Errorf("Couldn't find organization %s in the config", key)
+		return organization{}, fmt.Errorf(`Couldn't find organization %s in the config.
+
+Go to https://circleci.com/account/api if you need to create a token.
+`, key)
 	}
 }
 
