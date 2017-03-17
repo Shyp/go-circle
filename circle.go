@@ -1,28 +1,37 @@
 package circle
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Shyp/go-types"
+	"github.com/kevinburke/rest"
 )
 
 var client http.Client
+
+// TODO switch all clients to use this
+var v11client *rest.Client
 
 func init() {
 	client = http.Client{
 		Timeout: 10 * time.Second,
 	}
+	v11client = rest.NewClient("", "", v11BaseUri)
 }
 
 const VERSION = "0.22"
 const baseUri = "https://circleci.com/api/v1/project"
+const v11BaseUri = "https://circleci.com/api/v1.1/project"
 
 type TreeBuild struct {
 	BuildNum   int    `json:"build_num"`
@@ -131,6 +140,41 @@ func makeRequest(method, uri string) (io.ReadCloser, error) {
 	}
 
 	return resp.Body, nil
+}
+
+type FollowResponse struct {
+	Following bool `json:"following"`
+	// TODO...
+}
+
+func Enable(ctx context.Context, host string, org string, repoName string) error {
+	token, err := getToken(org)
+	if err != nil {
+		return err
+	}
+	var vcs string
+	switch {
+	case strings.Contains(host, "github.com"):
+		vcs = "github"
+	case strings.Contains(host, "bitbucket.org"):
+		vcs = "bitbucket"
+	default:
+		return fmt.Errorf("can't enable unknown host %s", host)
+	}
+	uri := fmt.Sprintf("/%s/%s/%s/follow?circle-token=%s", vcs, org, repoName, token)
+	req, err := v11client.NewRequest("POST", uri, nil)
+	if err != nil {
+		return err
+	}
+	req = req.WithContext(ctx)
+	fr := new(FollowResponse)
+	if err := v11client.Do(req, fr); err != nil {
+		return err
+	}
+	if fr.Following == false {
+		return errors.New("not following the project")
+	}
+	return nil
 }
 
 func GetTree(org string, project string, branch string) (*CircleTreeResponse, error) {
