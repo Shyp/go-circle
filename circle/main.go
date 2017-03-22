@@ -129,10 +129,11 @@ func doEnable(flags *flag.FlagSet) error {
 func main() {
 	waitflags := flag.NewFlagSet("wait", flag.ExitOnError)
 	waitflags.Usage = func() {
-		fmt.Fprintf(os.Stderr, `usage: wait
+		fmt.Fprintf(os.Stderr, `usage: wait [refspec]
 
-Wait for builds to complete, then print a descriptive output on 
-success or failure.
+Wait for builds to complete, then print a descriptive output on success or
+failure. By default, waits on the current branch, otherwise you can pass a
+branch to wait for.
 `)
 		waitflags.PrintDefaults()
 	}
