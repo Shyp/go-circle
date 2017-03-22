@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
+	"time"
 
 	circle "github.com/Shyp/go-circle"
 	"github.com/Shyp/go-circle/wait"
@@ -22,6 +24,7 @@ Usage:
 
 The commands are:
 
+	enable              Enable CircleCI tests for this project.
 	open                Open the latest branch build in a browser.
 	update              Update to the latest version
 	version             Print the current version
@@ -32,6 +35,9 @@ Use "circle help [command]" for more information about a command.
 `
 
 const downloadUsage = `usage: download-artifacts <build-num>`
+const enableUsage = `usage: enable [-h]
+
+Turn on CircleCI builds for this project.`
 
 func usage() {
 	fmt.Fprintf(os.Stderr, help)
@@ -110,6 +116,16 @@ func doDownload(flags *flag.FlagSet) error {
 	return nil
 }
 
+func doEnable(flags *flag.FlagSet) error {
+	remote, err := git.GetRemoteURL("origin")
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return circle.Enable(ctx, remote.Host, remote.Path, remote.RepoName)
+}
+
 func main() {
 	waitflags := flag.NewFlagSet("wait", flag.ExitOnError)
 	waitflags.Usage = func() {
@@ -119,6 +135,11 @@ Wait for builds to complete, then print a descriptive output on
 success or failure.
 `)
 		waitflags.PrintDefaults()
+	}
+	enableflags := flag.NewFlagSet("enable", flag.ExitOnError)
+	enableflags.Usage = func() {
+		fmt.Fprintf(os.Stderr, "%s\n\n", enableUsage)
+		enableflags.PrintDefaults()
 	}
 	openflags := flag.NewFlagSet("open", flag.ExitOnError)
 	downloadflags := flag.NewFlagSet("download-artifacts", flag.ExitOnError)
@@ -133,9 +154,14 @@ success or failure.
 		usage()
 		return
 	}
+	subargs := args[1:]
 	switch flag.Arg(0) {
+	case "enable":
+		enableflags.Parse(subargs)
+		err := doEnable(enableflags)
+		checkError(err)
 	case "open":
-		openflags.Parse(os.Args[2:])
+		openflags.Parse(subargs)
 		doOpen(openflags)
 	case "update":
 		err := equinoxUpdate()
@@ -144,7 +170,7 @@ success or failure.
 		fmt.Fprintf(os.Stderr, "circle version %s\n", circle.VERSION)
 		os.Exit(1)
 	case "wait":
-		waitflags.Parse(os.Args[2:])
+		waitflags.Parse(subargs)
 		args := waitflags.Args()
 		branch, err := getBranchFromArgs(args)
 		checkError(err)
@@ -155,7 +181,7 @@ success or failure.
 			fmt.Fprintf(os.Stderr, "usage: download-artifacts <build-number>\n")
 			os.Exit(1)
 		}
-		downloadflags.Parse(args[1:])
+		downloadflags.Parse(subargs)
 		err := doDownload(downloadflags)
 		checkError(err)
 	default:
