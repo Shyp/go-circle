@@ -105,7 +105,7 @@ func (a *Action) Failed() bool {
 }
 
 func getTreeUri(org string, project string, branch string, token string) string {
-	return fmt.Sprintf("%s/%s/%s/tree/%s?circle-token=%s", baseUri, org, project, branch, token)
+	return fmt.Sprintf("/%s/%s/tree/%s?circle-token=%s", org, project, branch, token)
 }
 
 func getBuildUri(org string, project string, build int, token string) string {
@@ -183,21 +183,16 @@ func GetTree(org string, project string, branch string) (*CircleTreeResponse, er
 		return nil, err
 	}
 	uri := getTreeUri(org, project, branch, token)
-	body, err := makeRequest("GET", uri)
+	client := rest.NewClient("", "", baseUri)
+	req, err := client.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	var cr CircleTreeResponse
-	var r io.Reader
-	if os.Getenv("CIRCLE_DEBUG") == "true" {
-		r = io.TeeReader(body, os.Stdout)
-	} else {
-		r = body
+	cr := new(CircleTreeResponse)
+	if err := client.Do(req, cr); err != nil {
+		return nil, err
 	}
-	d := json.NewDecoder(r)
-	err = d.Decode(&cr)
-	return &cr, err
+	return cr, nil
 }
 
 func GetBuild(org string, project string, buildNum int) (*CircleBuild, error) {
