@@ -68,6 +68,18 @@ func isHttpError(err error) bool {
 	}
 }
 
+// getMinTipLength compares two git hashes and returns the length of the
+// shortest
+func getMinTipLength(remoteTip string, localTip string) int {
+	var minTipLength int
+	if len(remoteTip) <= len(localTip) {
+		minTipLength = len(remoteTip)
+	} else {
+		minTipLength = len(localTip)
+	}
+	return minTipLength
+}
+
 func Wait(branch string) error {
 	remote, err := git.GetRemoteURL("origin")
 	if err != nil {
@@ -95,15 +107,10 @@ func Wait(branch string) error {
 				remote.Path, remote.RepoName)
 		}
 		latestBuild := (*cr)[0]
-		var maxTipLength int
-		if len(latestBuild.VCSRevision) <= len(tip) {
-			maxTipLength = len(latestBuild.VCSRevision)
-		} else {
-			maxTipLength = len(tip)
-		}
-		if latestBuild.VCSRevision[:maxTipLength] != tip[:maxTipLength] {
+		maxTipLengthToCompare := getMinTipLength(latestBuild.VCSRevision, tip)
+		if latestBuild.VCSRevision[:maxTipLengthToCompare] != tip[:maxTipLengthToCompare] {
 			fmt.Printf("Latest build in Circle is %s, waiting for %s...\n",
-				latestBuild.VCSRevision[:maxTipLength], tip[:maxTipLength])
+				latestBuild.VCSRevision[:maxTipLengthToCompare], tip[:maxTipLengthToCompare])
 			time.Sleep(5 * time.Second)
 			continue
 		}
