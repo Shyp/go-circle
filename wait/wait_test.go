@@ -50,3 +50,23 @@ func TestEffectiveCost(t *testing.T) {
 		t.Errorf("expected half hour cost to be %d, was %d", 15793, cost)
 	}
 }
+
+func TestGetMaxTipLength(t *testing.T) {
+	minTipLength := getMinTipLength("1d79f2b877c86ac0964f3fe69a0171926aa6f1d8", "1d79f2b87")
+	expectedMinTipLength := 9
+	if minTipLength != expectedMinTipLength {
+		t.Errorf("expected half hour cost to be %d, was %d", expectedMinTipLength, minTipLength)
+	}
+
+	minTipLength = getMinTipLength("1d79f2b877c86ac0964f3fe69a0171926aa6f1d8", "1d79f2b")
+	expectedMinTipLength = 7
+	if minTipLength != expectedMinTipLength {
+		t.Errorf("expected half hour cost to be %d, was %d", expectedMinTipLength, minTipLength)
+	}
+
+	minTipLength = getMinTipLength("1d79f", "1d79f2b87")
+	expectedMinTipLength = 5
+	if minTipLength != expectedMinTipLength {
+		t.Errorf("expected half hour cost to be %d, was %d", expectedMinTipLength, minTipLength)
+	}
+}
