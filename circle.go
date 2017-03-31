@@ -29,23 +29,23 @@ func init() {
 	v11client = rest.NewClient("", "", v11BaseUri)
 }
 
-const VERSION = "0.22"
+const VERSION = "0.23"
 const baseUri = "https://circleci.com/api/v1/project"
 const v11BaseUri = "https://circleci.com/api/v1.1/project"
 
 type TreeBuild struct {
-	BuildNum   int    `json:"build_num"`
-	BuildURL   string `json:"build_url"`
-	CompareURL string `json:"compare"`
+	BuildNum	int	`json:"build_num"`
+	BuildURL	string	`json:"build_url"`
+	CompareURL	string	`json:"compare"`
 	// Tree builds have a `previous_successful_build` field but as far as I can
 	// tell it is always null. Instead this field is set
-	Previous      PreviousBuild  `json:"previous"`
-	QueuedAt      types.NullTime `json:"queued_at"`
-	Status        string         `json:"status"`
-	StartTime     types.NullTime `json:"start_time"`
-	StopTime      types.NullTime `json:"stop_time"`
-	UsageQueuedAt types.NullTime `json:"usage_queued_at"`
-	VCSRevision   string         `json:"vcs_revision"`
+	Previous	PreviousBuild	`json:"previous"`
+	QueuedAt	types.NullTime	`json:"queued_at"`
+	Status		string		`json:"status"`
+	StartTime	types.NullTime	`json:"start_time"`
+	StopTime	types.NullTime	`json:"stop_time"`
+	UsageQueuedAt	types.NullTime	`json:"usage_queued_at"`
+	VCSRevision	string		`json:"vcs_revision"`
 }
 
 func (tb TreeBuild) Passed() bool {
@@ -65,39 +65,39 @@ func (tb TreeBuild) Failed() bool {
 }
 
 type CircleArtifact struct {
-	Path       string `json:"path"`
-	PrettyPath string `json:"pretty_path"`
-	NodeIndex  uint8  `json:"node_index"`
-	Url        string `json:"url"`
+	Path		string	`json:"path"`
+	PrettyPath	string	`json:"pretty_path"`
+	NodeIndex	uint8	`json:"node_index"`
+	Url		string	`json:"url"`
 }
 
 type CircleBuild struct {
-	Parallel                uint8          `json:"parallel"`
-	PreviousSuccessfulBuild PreviousBuild  `json:"previous_successful_build"`
-	QueuedAt                types.NullTime `json:"queued_at"`
-	Steps                   []Step         `json:"steps"`
-	UsageQueuedAt           types.NullTime `json:"usage_queued_at"`
+	Parallel		uint8		`json:"parallel"`
+	PreviousSuccessfulBuild	PreviousBuild	`json:"previous_successful_build"`
+	QueuedAt		types.NullTime	`json:"queued_at"`
+	Steps			[]Step		`json:"steps"`
+	UsageQueuedAt		types.NullTime	`json:"usage_queued_at"`
 }
 
 type PreviousBuild struct {
-	BuildNum int `json:"build_num"`
+	BuildNum	int	`json:"build_num"`
 	// would be neat to make this a time.Duration, easier to use the passed in
 	// value.
-	Status string `json:"status"`
+	Status	string	`json:"status"`
 
-	BuildDurationMs int `json:"build_time_millis"`
+	BuildDurationMs	int	`json:"build_time_millis"`
 }
 
 type Step struct {
-	Name    string   `json:"name"`
-	Actions []Action `json:"actions"`
+	Name	string		`json:"name"`
+	Actions	[]Action	`json:"actions"`
 }
 
 type Action struct {
-	Name      string         `json:"name"`
-	OutputURL URL            `json:"output_url"`
-	Runtime   CircleDuration `json:"run_time_millis"`
-	Status    string         `json:"status"`
+	Name		string		`json:"name"`
+	OutputURL	URL		`json:"output_url"`
+	Runtime		CircleDuration	`json:"run_time_millis"`
+	Status		string		`json:"status"`
 }
 
 func (a *Action) Failed() bool {
