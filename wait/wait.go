@@ -95,21 +95,15 @@ func Wait(branch string) error {
 				remote.Path, remote.RepoName)
 		}
 		latestBuild := (*cr)[0]
-		var vcsLen int
-		var tipLen int
-		if len(latestBuild.VCSRevision) > 8 {
-			vcsLen = 8
+		var maxTipLength int
+		if len(latestBuild.VCSRevision) <= len(tip) {
+			maxTipLength = len(latestBuild.VCSRevision)
 		} else {
-			vcsLen = len(latestBuild.VCSRevision)
+			maxTipLength = len(tip)
 		}
-		if len(tip) > 8 {
-			tipLen = 8
-		} else {
-			tipLen = len(tip)
-		}
-		if latestBuild.VCSRevision[:tipLen] != tip {
+		if latestBuild.VCSRevision[:maxTipLength] != tip[:maxTipLength] {
 			fmt.Printf("Latest build in Circle is %s, waiting for %s...\n",
-				latestBuild.VCSRevision[:vcsLen], tip[:tipLen])
+				latestBuild.VCSRevision[:maxTipLength], tip[:maxTipLength])
 			time.Sleep(5 * time.Second)
 			continue
 		}
