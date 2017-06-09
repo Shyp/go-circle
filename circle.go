@@ -34,18 +34,21 @@ const baseUri = "https://circleci.com/api/v1/project"
 const v11BaseUri = "https://circleci.com/api/v1.1/project"
 
 type TreeBuild struct {
-	BuildNum	int	`json:"build_num"`
-	BuildURL	string	`json:"build_url"`
-	CompareURL	string	`json:"compare"`
+	BuildNum   int    `json:"build_num"`
+	BuildURL   string `json:"build_url"`
+	CompareURL string `json:"compare"`
 	// Tree builds have a `previous_successful_build` field but as far as I can
 	// tell it is always null. Instead this field is set
-	Previous	PreviousBuild	`json:"previous"`
-	QueuedAt	types.NullTime	`json:"queued_at"`
-	Status		string		`json:"status"`
-	StartTime	types.NullTime	`json:"start_time"`
-	StopTime	types.NullTime	`json:"stop_time"`
-	UsageQueuedAt	types.NullTime	`json:"usage_queued_at"`
-	VCSRevision	string		`json:"vcs_revision"`
+	Previous      PreviousBuild  `json:"previous"`
+	QueuedAt      types.NullTime `json:"queued_at"`
+	RepoName      string         `json:"reponame"`
+	Status        string         `json:"status"`
+	StartTime     types.NullTime `json:"start_time"`
+	StopTime      types.NullTime `json:"stop_time"`
+	UsageQueuedAt types.NullTime `json:"usage_queued_at"`
+	Username      string         `json:"username"`
+	VCSRevision   string         `json:"vcs_revision"`
+	VCSType       string         `json:"vcs_type"`
 }
 
 func (tb TreeBuild) Passed() bool {
@@ -65,39 +68,39 @@ func (tb TreeBuild) Failed() bool {
 }
 
 type CircleArtifact struct {
-	Path		string	`json:"path"`
-	PrettyPath	string	`json:"pretty_path"`
-	NodeIndex	uint8	`json:"node_index"`
-	Url		string	`json:"url"`
+	Path       string `json:"path"`
+	PrettyPath string `json:"pretty_path"`
+	NodeIndex  uint8  `json:"node_index"`
+	Url        string `json:"url"`
 }
 
 type CircleBuild struct {
-	Parallel		uint8		`json:"parallel"`
-	PreviousSuccessfulBuild	PreviousBuild	`json:"previous_successful_build"`
-	QueuedAt		types.NullTime	`json:"queued_at"`
-	Steps			[]Step		`json:"steps"`
-	UsageQueuedAt		types.NullTime	`json:"usage_queued_at"`
+	Parallel                uint8          `json:"parallel"`
+	PreviousSuccessfulBuild PreviousBuild  `json:"previous_successful_build"`
+	QueuedAt                types.NullTime `json:"queued_at"`
+	Steps                   []Step         `json:"steps"`
+	UsageQueuedAt           types.NullTime `json:"usage_queued_at"`
 }
 
 type PreviousBuild struct {
-	BuildNum	int	`json:"build_num"`
+	BuildNum int `json:"build_num"`
 	// would be neat to make this a time.Duration, easier to use the passed in
 	// value.
-	Status	string	`json:"status"`
+	Status string `json:"status"`
 
-	BuildDurationMs	int	`json:"build_time_millis"`
+	BuildDurationMs int `json:"build_time_millis"`
 }
 
 type Step struct {
-	Name	string		`json:"name"`
-	Actions	[]Action	`json:"actions"`
+	Name    string   `json:"name"`
+	Actions []Action `json:"actions"`
 }
 
 type Action struct {
-	Name		string		`json:"name"`
-	OutputURL	URL		`json:"output_url"`
-	Runtime		CircleDuration	`json:"run_time_millis"`
-	Status		string		`json:"status"`
+	Name      string         `json:"name"`
+	OutputURL URL            `json:"output_url"`
+	Runtime   CircleDuration `json:"run_time_millis"`
+	Status    string         `json:"status"`
 }
 
 func (a *Action) Failed() bool {
@@ -177,7 +180,30 @@ func Enable(ctx context.Context, host string, org string, repoName string) error
 	return nil
 }
 
+func Rebuild(ctx context.Context, tb *TreeBuild) error {
+	token, err := getToken(tb.Username)
+	if err != nil {
+		return err
+	}
+	// https://circleci.com/gh/segmentio/db-service/1488
+	// url we have is https://circleci.com/api/v1.1/project/github/segmentio/db-service/1486/retry
+	uri := fmt.Sprintf("/%s/%s/%s/%d/retry?circle-token=%s", tb.VCSType, tb.Username, tb.RepoName, tb.BuildNum, token)
+	req, err := v11client.NewRequest("POST", uri, strings.NewReader("null"))
+	if err != nil {
+		return err
+	}
+	req = req.WithContext(ctx)
+	if err := v11client.Do(req, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetTree(org string, project string, branch string) (*CircleTreeResponse, error) {
+	return GetTreeContext(context.Background(), org, project, branch)
+}
+
+func GetTreeContext(ctx context.Context, org, project, branch string) (*CircleTreeResponse, error) {
 	token, err := getToken(org)
 	if err != nil {
 		return nil, err
@@ -188,6 +214,7 @@ func GetTree(org string, project string, branch string) (*CircleTreeResponse, er
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	cr := new(CircleTreeResponse)
 	if err := client.Do(req, cr); err != nil {
 		return nil, err

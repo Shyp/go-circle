@@ -26,6 +26,7 @@ The commands are:
 
 	enable              Enable CircleCI tests for this project.
 	open                Open the latest branch build in a browser.
+	rebuild             Rebuild a given test branch.
 	update              Update to the latest version
 	version             Print the current version
 	wait                Wait for tests to finish on a branch.
@@ -126,6 +127,26 @@ func doEnable(flags *flag.FlagSet) error {
 	return circle.Enable(ctx, remote.Host, remote.Path, remote.RepoName)
 }
 
+func doRebuild(flags *flag.FlagSet) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	args := flags.Args()
+	branch, err := getBranchFromArgs(args)
+	if err != nil {
+		return err
+	}
+	remote, err := git.GetRemoteURL("origin")
+	if err != nil {
+		return err
+	}
+	cr, err := circle.GetTreeContext(ctx, remote.Path, remote.RepoName, branch)
+	if err != nil {
+		return err
+	}
+	latestBuild := (*cr)[0]
+	return circle.Rebuild(ctx, &latestBuild)
+}
+
 func main() {
 	waitflags := flag.NewFlagSet("wait", flag.ExitOnError)
 	waitflags.Usage = func() {
@@ -148,6 +169,14 @@ branch to wait for.
 		fmt.Fprintf(os.Stderr, "%s\n\n", downloadUsage)
 		downloadflags.PrintDefaults()
 	}
+	rebuildflags := flag.NewFlagSet("rebuild", flag.ExitOnError)
+	rebuildflags.Usage = func() {
+		fmt.Fprintf(os.Stderr, `usage: rebuild
+
+Rebuild a given test branch
+`)
+		rebuildflags.PrintDefaults()
+	}
 
 	flag.Parse()
 	args := flag.Args()
@@ -164,6 +193,10 @@ branch to wait for.
 	case "open":
 		openflags.Parse(subargs)
 		doOpen(openflags)
+	case "rebuild":
+		rebuildflags.Parse(subargs)
+		err := doRebuild(rebuildflags)
+		checkError(err)
 	case "update":
 		err := equinoxUpdate()
 		checkError(err)
