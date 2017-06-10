@@ -18,7 +18,7 @@ import (
 
 const help = `The circle binary interacts with a server that runs your tests.
 
-Usage: 
+Usage:
 
 	circle command [arguments]
 
@@ -127,6 +127,28 @@ func doEnable(flags *flag.FlagSet) error {
 	return circle.Enable(ctx, remote.Host, remote.Path, remote.RepoName)
 }
 
+func doFailures(flags *flag.FlagSet) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	args := flags.Args()
+	branch, err := getBranchFromArgs(args)
+	if err != nil {
+		return err
+	}
+	fmt.Println(branch)
+	remote, err := git.GetRemoteURL("origin")
+	if err != nil {
+		return err
+	}
+	cr, err := circle.GetTreeContext(ctx, remote.Path, remote.RepoName, branch)
+	if err != nil {
+		return err
+	}
+	// latestBuild := (*cr)[0]
+	fmt.Println(cr)
+	return nil
+}
+
 func doRebuild(flags *flag.FlagSet) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -163,6 +185,7 @@ branch to wait for.
 		fmt.Fprintf(os.Stderr, "%s\n\n", enableUsage)
 		enableflags.PrintDefaults()
 	}
+	failuresFlags := flag.NewFlagSet("failures", flag.ExitOnError)
 	openflags := flag.NewFlagSet("open", flag.ExitOnError)
 	downloadflags := flag.NewFlagSet("download-artifacts", flag.ExitOnError)
 	downloadflags.Usage = func() {
@@ -190,6 +213,9 @@ Rebuild a given test branch
 		enableflags.Parse(subargs)
 		err := doEnable(enableflags)
 		checkError(err)
+	case "failures":
+		failuresFlags.Parse(subargs)
+		doFailures(failuresFlags)
 	case "open":
 		openflags.Parse(subargs)
 		doOpen(openflags)
