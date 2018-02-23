@@ -10,7 +10,7 @@ build:
 	go get ./...
 	go build ./...
 
-lint: 
+lint:
 	go vet ./...
 ifndef STATICCHECK
 	go get -u honnef.co/go/tools/cmd/staticcheck
@@ -28,3 +28,6 @@ endif
 	bump_version minor circle.go
 	git push origin master
 	git push origin master --tags
+
+equinox:
+	cd circle && equinox release --version $(git log -1 --pretty=%B) --token $(cat ../cfg/equinox) --app app_n7HhD13kpUR --platforms darwin_amd64,linux_amd64 --signing-key ../cfg/equinox.key
