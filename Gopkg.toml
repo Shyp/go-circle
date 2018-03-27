@@ -1,0 +1,44 @@
+
+[[constraint]]
+  name = "github.com/BurntSushi/toml"
+  version = "0.3.0"
+
+[[constraint]]
+  name = "github.com/Shyp/go-git"
+  version = "0.5.0"
+
+[[constraint]]
+  name = "github.com/Shyp/go-types"
+  version = "0.23.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/equinox-io/equinox"
+
+[[constraint]]
+  name = "github.com/kevinburke/bigtext"
+  version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/kevinburke/rest"
+  version = "2.0.0"
+
+[[override]]
+  name = "github.com/github/hub"
+  branch = "master"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/skratchdot/open-golang"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/sync"
+
+[prune]
+  go-tests = true
+  unused-packages = true
